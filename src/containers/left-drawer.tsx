@@ -50,7 +50,9 @@ const LeftDrawer = ({ children }: { children: any }) => {
           aria-label="close sidebar"
           className="drawer-overlay"
         ></label>
-        <div className="navbar text-xl font-semibold">bugalteriya</div>
+        <div className="navbar text-xl font-semibold">
+          Учет операций бугалтерии
+        </div>
         <ul className="menu bg-base-100 text-base-content min-h-full w-80 p-4 overflow-y-auto">
           <button
             className="btn btn-ghost bg-base-300  btn-circle z-50 top-0 right-0 mt-4 mr-2 absolute lg:hidden"

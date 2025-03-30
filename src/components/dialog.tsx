@@ -64,7 +64,7 @@ const GenericDialog = <T extends Record<string, any>, K>({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
       <div className="rounded-lg bg-base-100 p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">Create New Entry</h2>
+        <h2 className="text-xl font-bold mb-4">Создать</h2>
         <form onSubmit={handleSubmit(handleFormSubmit)}>
           {fields.map((field) => (
             <div key={field.key.toString()} className="mb-4">
@@ -110,10 +110,10 @@ const GenericDialog = <T extends Record<string, any>, K>({
           ))}
           <div className="flex justify-end gap-2">
             <button type="button" onClick={onClose} className="btn btn-ghost">
-              Cancel
+              Закрыть
             </button>
             <button type="submit" className="btn btn-primary">
-              Submit
+              Подтвердить
             </button>
           </div>
         </form>

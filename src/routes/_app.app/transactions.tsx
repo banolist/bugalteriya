@@ -95,12 +95,12 @@ function RouteComponent() {
       columns={columns}
       data={data}
       fields={[
-        { key: "date", label: "Date", type: "date" },
-        { key: "amount", label: "Amount", type: "number" },
-        { key: "operationType", label: "Operation Type", type: "text" },
+        { key: "date", label: "Дата", type: "date" },
+        { key: "amount", label: "Сумма", type: "number" },
+        { key: "operationType", label: "Тип операции", type: "text" },
         {
           key: "productId",
-          label: "Product",
+          label: "Продукт",
           type: "select",
           options: {
             options: products,
