@@ -1,10 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { FormEvent, useEffect } from "react";
-import { createDatabase } from "~/app/database";
 import { useAuth } from "~/context/AuthContext";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useDatabase } from "~/context/databaseContext";
 
 // Схема валидации с использованием zod
 const loginSchema = z.object({
@@ -30,7 +29,7 @@ function RouteComponent() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
-  const db = createDatabase();
+  const db = useDatabase();
 
   // useEffect(() => {
   //   try {

@@ -15,9 +15,9 @@ import { Route as LoginImport } from './routes/login'
 import { Route as AppImport } from './routes/_app'
 import { Route as IndexImport } from './routes/index'
 import { Route as AppAppIndexImport } from './routes/_app.app/index'
+import { Route as AppAppUsersImport } from './routes/_app.app/users'
 import { Route as AppAppTransactionsImport } from './routes/_app.app/transactions'
 import { Route as AppAppSalaryImport } from './routes/_app.app/salary'
-import { Route as AppAppReportImport } from './routes/_app.app/report'
 import { Route as AppAppProductsImport } from './routes/_app.app/products'
 import { Route as AppAppEmployeeImport } from './routes/_app.app/employee'
 
@@ -46,6 +46,12 @@ const AppAppIndexRoute = AppAppIndexImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 
+const AppAppUsersRoute = AppAppUsersImport.update({
+  id: '/app/users',
+  path: '/app/users',
+  getParentRoute: () => AppRoute,
+} as any)
+
 const AppAppTransactionsRoute = AppAppTransactionsImport.update({
   id: '/app/transactions',
   path: '/app/transactions',
@@ -55,12 +61,6 @@ const AppAppTransactionsRoute = AppAppTransactionsImport.update({
 const AppAppSalaryRoute = AppAppSalaryImport.update({
   id: '/app/salary',
   path: '/app/salary',
-  getParentRoute: () => AppRoute,
-} as any)
-
-const AppAppReportRoute = AppAppReportImport.update({
-  id: '/app/report',
-  path: '/app/report',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -115,13 +115,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppProductsImport
       parentRoute: typeof AppImport
     }
-    '/_app/app/report': {
-      id: '/_app/app/report'
-      path: '/app/report'
-      fullPath: '/app/report'
-      preLoaderRoute: typeof AppAppReportImport
-      parentRoute: typeof AppImport
-    }
     '/_app/app/salary': {
       id: '/_app/app/salary'
       path: '/app/salary'
@@ -134,6 +127,13 @@ declare module '@tanstack/react-router' {
       path: '/app/transactions'
       fullPath: '/app/transactions'
       preLoaderRoute: typeof AppAppTransactionsImport
+      parentRoute: typeof AppImport
+    }
+    '/_app/app/users': {
+      id: '/_app/app/users'
+      path: '/app/users'
+      fullPath: '/app/users'
+      preLoaderRoute: typeof AppAppUsersImport
       parentRoute: typeof AppImport
     }
     '/_app/app/': {
@@ -151,18 +151,18 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAppEmployeeRoute: typeof AppAppEmployeeRoute
   AppAppProductsRoute: typeof AppAppProductsRoute
-  AppAppReportRoute: typeof AppAppReportRoute
   AppAppSalaryRoute: typeof AppAppSalaryRoute
   AppAppTransactionsRoute: typeof AppAppTransactionsRoute
+  AppAppUsersRoute: typeof AppAppUsersRoute
   AppAppIndexRoute: typeof AppAppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAppEmployeeRoute: AppAppEmployeeRoute,
   AppAppProductsRoute: AppAppProductsRoute,
-  AppAppReportRoute: AppAppReportRoute,
   AppAppSalaryRoute: AppAppSalaryRoute,
   AppAppTransactionsRoute: AppAppTransactionsRoute,
+  AppAppUsersRoute: AppAppUsersRoute,
   AppAppIndexRoute: AppAppIndexRoute,
 }
 
@@ -174,9 +174,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/app/employee': typeof AppAppEmployeeRoute
   '/app/products': typeof AppAppProductsRoute
-  '/app/report': typeof AppAppReportRoute
   '/app/salary': typeof AppAppSalaryRoute
   '/app/transactions': typeof AppAppTransactionsRoute
+  '/app/users': typeof AppAppUsersRoute
   '/app': typeof AppAppIndexRoute
 }
 
@@ -186,9 +186,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/app/employee': typeof AppAppEmployeeRoute
   '/app/products': typeof AppAppProductsRoute
-  '/app/report': typeof AppAppReportRoute
   '/app/salary': typeof AppAppSalaryRoute
   '/app/transactions': typeof AppAppTransactionsRoute
+  '/app/users': typeof AppAppUsersRoute
   '/app': typeof AppAppIndexRoute
 }
 
@@ -199,9 +199,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/app/employee': typeof AppAppEmployeeRoute
   '/_app/app/products': typeof AppAppProductsRoute
-  '/_app/app/report': typeof AppAppReportRoute
   '/_app/app/salary': typeof AppAppSalaryRoute
   '/_app/app/transactions': typeof AppAppTransactionsRoute
+  '/_app/app/users': typeof AppAppUsersRoute
   '/_app/app/': typeof AppAppIndexRoute
 }
 
@@ -213,9 +213,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/employee'
     | '/app/products'
-    | '/app/report'
     | '/app/salary'
     | '/app/transactions'
+    | '/app/users'
     | '/app'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -224,9 +224,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/app/employee'
     | '/app/products'
-    | '/app/report'
     | '/app/salary'
     | '/app/transactions'
+    | '/app/users'
     | '/app'
   id:
     | '__root__'
@@ -235,9 +235,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/app/employee'
     | '/_app/app/products'
-    | '/_app/app/report'
     | '/_app/app/salary'
     | '/_app/app/transactions'
+    | '/_app/app/users'
     | '/_app/app/'
   fileRoutesById: FileRoutesById
 }
@@ -277,9 +277,9 @@ export const routeTree = rootRoute
       "children": [
         "/_app/app/employee",
         "/_app/app/products",
-        "/_app/app/report",
         "/_app/app/salary",
         "/_app/app/transactions",
+        "/_app/app/users",
         "/_app/app/"
       ]
     },
@@ -294,16 +294,16 @@ export const routeTree = rootRoute
       "filePath": "_app.app/products.tsx",
       "parent": "/_app"
     },
-    "/_app/app/report": {
-      "filePath": "_app.app/report.tsx",
-      "parent": "/_app"
-    },
     "/_app/app/salary": {
       "filePath": "_app.app/salary.tsx",
       "parent": "/_app"
     },
     "/_app/app/transactions": {
       "filePath": "_app.app/transactions.tsx",
+      "parent": "/_app"
+    },
+    "/_app/app/users": {
+      "filePath": "_app.app/users.tsx",
       "parent": "/_app"
     },
     "/_app/app/": {

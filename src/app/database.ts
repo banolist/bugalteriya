@@ -1,4 +1,5 @@
 import Database from "@tauri-apps/plugin-sql";
+import { faker } from "@faker-js/faker/locale/ru";
 import {
   Product,
   User,
@@ -7,6 +8,81 @@ import {
   Report,
   Employee,
 } from "./types";
+
+export const initializeDatabase = async (db: Database) => {
+  const dbInstance = createDatabase(db);
+
+  // Проверяем, есть ли данные в базе
+  const usersCount = await dbInstance.users
+    .select()
+    .then((users) => users.length);
+  if (usersCount > 0) {
+    return; // База уже инициализирована
+  }
+
+  // Создаем тестовых пользователей
+  const adminUser: Omit<User, "id"> = {
+    username: "admin",
+    password: "admin123", // В реальном приложении используйте хеширование!
+    name: "admin",
+  };
+  await dbInstance.users.create(adminUser);
+
+  // Создаем сотрудников
+  const employees: Omit<Employee, "id">[] = Array.from({ length: 5 }, () => ({
+    fullName: faker.person.fullName(),
+    position: faker.person.jobTitle(),
+    hireDate: faker.date.past({ years: 2 }),
+  }));
+
+  const createdEmployees = await Promise.all(
+    employees.map((emp) => dbInstance.employees.insert(emp))
+  );
+
+  // Создаем продукты
+  const products: Omit<Product, "id">[] = Array.from({ length: 10 }, () => ({
+    name: faker.commerce.productName(),
+    price: parseFloat(faker.commerce.price({ min: 100, max: 10000 })),
+    quantity: faker.number.int({ min: 1, max: 100 }),
+  }));
+
+  const createdProducts = await Promise.all(
+    products.map((prod) => dbInstance.products.insert(prod))
+  );
+
+  // Создаем финансовые операции
+  const operations: Omit<FinancialOperation, "id">[] = Array.from(
+    { length: 20 },
+    () => ({
+      date: faker.date.recent({ days: 30 }),
+      amount: parseFloat(faker.commerce.price({ min: 100, max: 5000 })),
+      operationType: faker.helpers.arrayElement(["income", "expense"]),
+      productId: faker.helpers.arrayElement(createdProducts),
+    })
+  );
+
+  const createdOperations = await Promise.all(
+    operations.map((op) => dbInstance.financialOperations.insert(op))
+  );
+
+  // Создаем зарплаты
+  const salaries: Omit<Salary, "id">[] = Array.from({ length: 10 }, () => ({
+    employeeId: faker.helpers.arrayElement(createdEmployees),
+    period: faker.date.recent({ days: 60 }),
+    amount: faker.number.int({ min: 20000, max: 100000 }),
+  }));
+
+  await Promise.all(salaries.map((salary) => dbInstance.salary.insert(salary)));
+
+  // Создаем отчеты
+  const reports: Omit<Report, "id">[] = Array.from({ length: 5 }, () => ({
+    reportType: faker.helpers.arrayElement(["sales", "expenses", "inventory"]),
+    createdAt: faker.date.recent({ days: 7 }),
+    operationId: faker.helpers.arrayElement(createdOperations),
+  }));
+
+  await Promise.all(reports.map((report) => dbInstance.report.insert(report)));
+};
 
 export const createDatabase = (db: Database) => {
   const usersQueryBuilder = new QueryBuilder<User>("users", db);
@@ -21,45 +97,18 @@ export const createDatabase = (db: Database) => {
 
   return {
     users: {
-      fetch: () => usersQueryBuilder.select(),
+      select: () => usersQueryBuilder.select(),
       create: (user: Omit<User, "id">) => usersQueryBuilder.insert(user),
       getByLogin: (login: string) =>
         usersQueryBuilder.select({ username: login }).then((users) => users[0]),
       delete: (userId: number) => usersQueryBuilder.delete(userId),
       save: (user: User) => usersQueryBuilder.update(user.id, user),
     },
-    products: {
-      fetch: () => productQueryBuilder.select(),
-      create: (user: Omit<Product, "id">) => productQueryBuilder.insert(user),
-      delete: (userId: number) => productQueryBuilder.delete(userId),
-      save: (user: Product) => productQueryBuilder.update(user.id, user),
-    },
-    employees: {
-      fetch: () => EmployeeQueryBuilder.select(),
-      create: (user: Omit<Employee, "id">) => EmployeeQueryBuilder.insert(user),
-      delete: (userId: number) => EmployeeQueryBuilder.delete(userId),
-      save: (user: Employee) => EmployeeQueryBuilder.update(user.id, user),
-    },
-    salary: {
-      fetch: () => SalaryQueryBuilder.select(),
-      create: (user: Omit<Salary, "id">) => SalaryQueryBuilder.insert(user),
-      delete: (userId: number) => SalaryQueryBuilder.delete(userId),
-      save: (user: Salary) => SalaryQueryBuilder.update(user.id, user),
-    },
-    financialOperations: {
-      fetch: () => FinancialOperationQueryBuilder.select(),
-      create: (user: Omit<FinancialOperation, "id">) =>
-        FinancialOperationQueryBuilder.insert(user),
-      delete: (userId: number) => FinancialOperationQueryBuilder.delete(userId),
-      save: (user: FinancialOperation) =>
-        FinancialOperationQueryBuilder.update(user.id, user),
-    },
-    report: {
-      fetch: () => ReportQueryBuilder.select(),
-      create: (user: Omit<Report, "id">) => ReportQueryBuilder.insert(user),
-      delete: (userId: number) => ReportQueryBuilder.delete(userId),
-      save: (user: Report) => ReportQueryBuilder.update(user.id, user),
-    },
+    products: productQueryBuilder,
+    employees: EmployeeQueryBuilder,
+    salary: SalaryQueryBuilder,
+    financialOperations: FinancialOperationQueryBuilder,
+    report: ReportQueryBuilder,
   };
 };
 
@@ -110,6 +159,11 @@ class QueryBuilder<T> {
 
     const query = `UPDATE ${this.tableName} SET ${updates} WHERE id = ?`;
     await this.db.execute(query, values);
+  }
+  async count() {
+    const query = `SELECT COUNT(*) FROM ${this.tableName}`;
+    const result = await this.db.execute(query);
+    return result;
   }
 
   async delete(id: number): Promise<void> {

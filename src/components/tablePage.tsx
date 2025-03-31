@@ -5,13 +5,14 @@ import GenericTable from "./table";
 import IcBaselineEdit from "~icons/ic/baseline-edit?width=24px&height=24px";
 import IcBaselineDeleteForever from "~icons/ic/baseline-delete-forever?width=24px&height=24px";
 import { z } from "zod";
+import { exportToXLSX } from "~/app/utils";
 
 interface TablePageProps<T extends Record<string, any>, K = unknown> {
   data?: T[];
   columns: ColumnDef<T, unknown>[];
   fields: FieldDialog<T, K>[];
   schema: z.ZodSchema<T>;
-  accessorID?: keyof T;
+  accessorID: keyof T;
 
   title: string;
   createBtnText?: string;
@@ -47,6 +48,7 @@ export default function TablePage<T extends Record<string, any>>(
   const handleEdit = async (id: string) => {
     try {
       const selected = await props.getByID(id);
+      console.log(selected);
       if (selected) {
         setSelectedValue(selected);
         handleOpenDialog();
@@ -65,19 +67,21 @@ export default function TablePage<T extends Record<string, any>>(
       {
         header: "Действия",
         accessorKey: props.accessorID || "id",
-        cell: (id: any) => (
+        cell: (data) => (
           <div className="flex gap-2 *:btn *:btn-circle">
             <button
-              onClick={() => handleEdit(id as string)}
+              onClick={() => {
+                handleEdit(data.row.original[props.accessorID]);
+              }}
               className="btn-primary"
             >
-              <IcBaselineEdit />
+              <IcBaselineEdit className="w-5" />
             </button>
             <button
-              onClick={() => handleDelete(id as string)}
+              onClick={() => handleDelete(data.row.original[props.accessorID])}
               className="btn-error"
             >
-              <IcBaselineDeleteForever />
+              <IcBaselineDeleteForever className="w-5" />
             </button>
           </div>
         ),
@@ -93,11 +97,25 @@ export default function TablePage<T extends Record<string, any>>(
         columns={columns}
         data={data}
         toolbar={
-          <button className="btn" onClick={() => setIsDialogOpen(true)}>
-            {props.createBtnText || "Создать"}
-          </button>
+          <>
+            <button
+              className="btn"
+              onClick={() => {
+                if (!data) return;
+                exportToXLSX(data);
+              }}
+            >
+              Скачать в xlsx
+            </button>
+            <button
+              className="btn btn-success"
+              onClick={() => setIsDialogOpen(true)}
+            >
+              {props.createBtnText || "Создать"}
+            </button>
+          </>
         }
-        getRowId={(row, index) => `${index}-${row.name}`}
+        getRowId={(row, index) => `${row[props.accessorID] || "row"}-${index}`}
       />
       <GenericDialog
         defaultValues={selectedValue || undefined}

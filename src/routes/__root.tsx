@@ -2,7 +2,7 @@ import * as React from "react";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 import { AuthProvider } from "~/context/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Database from "@tauri-apps/plugin-sql";
+
 import { DatabaseProvider } from "~/context/databaseContext";
 export const Route = createRootRoute({
   component: RootComponent,

@@ -5,9 +5,8 @@ import { z } from "zod";
 import { FieldDialog } from "~/components/dialog";
 import TablePage from "~/components/tablePage";
 import { useDatabase } from "~/context/databaseContext";
-import { displayTime } from "~/utils";
 
-export const Route = createFileRoute("/_app/app/employee")({
+export const Route = createFileRoute("/_app/app/users")({
   component: RouteComponent,
 });
 
@@ -20,16 +19,11 @@ function RouteComponent() {
       },
       {
         header: "Полное имя",
-        accessorKey: "fullName",
+        accessorKey: "name",
       },
       {
-        header: "Должность",
-        accessorKey: "position",
-      },
-      {
-        header: "Дата приема",
-        accessorKey: "hireDate",
-        cell: (info: any) => displayTime(info.cell.getValue() as string), // Format the date
+        header: "username",
+        accessorKey: "username",
       },
     ],
     []
@@ -37,19 +31,19 @@ function RouteComponent() {
   const fieldsDialog: FieldDialog<Employee>[] = useMemo(
     () => [
       {
-        key: "fullName",
+        key: "name",
         label: "Полное имя",
         type: "text",
       },
       {
-        key: "position",
-        label: "Должность",
+        key: "username",
+        label: "username",
         type: "text",
       },
       {
-        key: "hireDate",
-        label: "Дата приема",
-        type: "date",
+        key: "password",
+        label: "Пароль",
+        type: "text",
       },
     ],
     []
@@ -58,7 +52,7 @@ function RouteComponent() {
   const db = useDatabase();
   const [data, setData] = useState<Employee[]>([]);
   useEffect(() => {
-    db.employees.select().then((v) => {
+    db.users.select().then((v) => {
       setData(v);
     });
 
@@ -77,12 +71,12 @@ function RouteComponent() {
     );
   };
   const handleDelete = async (id: string) => {
-    await db.employees.delete(parseInt(id));
+    await db.users.delete(parseInt(id));
     setData((perv) => perv.filter((perv) => perv.id != parseInt(id)));
   };
 
   const handleCreate = async (data: Omit<Employee, "id">) => {
-    const id = await db.employees.insert(data);
+    const id = await db.users.create(data);
     setData((perv) => [...perv, { ...data, id }]);
   };
 
@@ -94,14 +88,14 @@ function RouteComponent() {
 
   return (
     <TablePage
-      title="Сотрудники"
+      title="Пользователи"
       data={data}
       columns={columns}
       fields={fieldsDialog}
       schema={employeeSchema}
       getByID={handleGetByID}
       accessorID="id"
-      createBtnText="Создать Сотрудника"
+      createBtnText="Создать пользователя"
       onCreate={handleCreate}
       onEdit={handleEdit}
       onDelete={handleDelete}
@@ -110,13 +104,8 @@ function RouteComponent() {
 }
 const employeeSchema = z.object({
   id: z.number().optional(),
-  fullName: z.string(),
-  position: z.string(),
-  hireDate: z.coerce.date(),
+  username: z.string(),
+  password: z.string(),
+  name: z.string(),
 });
 type Employee = z.infer<typeof employeeSchema>;
-
-// const data: Employee[] = [
-//   { id: 1, fullName: "1", position: "121", hireDate: new Date() },
-//   { id: 2, fullName: "1", position: "234234", hireDate: new Date() },
-// ];

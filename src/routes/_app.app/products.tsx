@@ -1,13 +1,11 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
-import { createDatabase } from "~/app/database";
 import { FieldDialog } from "~/components/dialog";
 import TablePage from "~/components/tablePage";
 import { useDatabase } from "~/context/databaseContext";
-import { displayPrice, displayTime } from "~/utils";
+import { displayPrice } from "~/utils";
 
 export const Route = createFileRoute("/_app/app/products")({
   component: RouteComponent,
@@ -44,17 +42,6 @@ const fieldsDialog: FieldDialog<Product>[] = [
 ];
 
 function RouteComponent() {
-  const database = useDatabase();
-  const query = useQuery({
-    queryKey: ["products"],
-    queryFn: async () => {
-      const data = await database.products.fetch();
-      console.log(data);
-
-      return data;
-    },
-  });
-
   const columns: ColumnDef<Product, unknown>[] = useMemo(
     () => [
       {
@@ -62,9 +49,9 @@ function RouteComponent() {
         accessorKey: "id",
       },
       {
-        header: "Дата",
-        accessorKey: "date",
-        cell: (info: any) => displayTime(info), // Format the date
+        header: "название",
+        accessorKey: "name",
+        // cell: (info) => displayTime(info.cell.getValue() as string), // Format the date
       },
       {
         header: "Сумма",
@@ -78,17 +65,56 @@ function RouteComponent() {
     ],
     []
   );
+
+  const db = useDatabase();
+  const [data, setData] = useState<Product[]>([]);
+  useEffect(() => {
+    db.products.select().then((v) => {
+      setData(v);
+    });
+
+    return;
+  }, [db]);
+
+  const handleEdit = async (data: Product & { id: string }): Promise<void> => {
+    await db.products.update(data.id, data);
+    setData((perv) =>
+      perv.map((perv) => {
+        if (perv.id == data.id) {
+          return data;
+        }
+        return perv;
+      })
+    );
+  };
+  const handleDelete = async (id: string) => {
+    await db.products.delete(parseInt(id));
+    setData((perv) => perv.filter((perv) => perv.id != id));
+  };
+
+  const handleCreate = async (data: Omit<Product, "id">) => {
+    const id = await db.products.insert(data);
+    setData((perv) => [...perv, { ...data, id: id.toString() }]);
+  };
+
+  const handleGetByID = async (id: string) => {
+    const finded = data.find((v) => v.id == id)!;
+    console.log("test", finded, "id", id, data);
+    return finded;
+  };
   return (
     <TablePage
       title="Продукты"
-      data={query.data!}
+      data={data}
       columns={columns}
       fields={fieldsDialog}
       schema={productSchema}
-      getByID={async (id) => query.data?.find((v) => v.id === id)!}
-      onCreate={(data) => {
-        return database.products.create(data);
-      }}
+      getByID={handleGetByID}
+      onCreate={handleCreate}
+      accessorID="id"
+      createBtnText="Добавить продукт"
+      onDelete={handleDelete}
+      onEdit={handleEdit}
     />
   );
 }

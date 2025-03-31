@@ -1,7 +1,11 @@
 import Database from "@tauri-apps/plugin-sql";
 import React from "react";
-import { createContext, use, useEffect, useState } from "react";
-import { createDatabase, DatabaseInst } from "~/app/database";
+import { createContext, use, useState } from "react";
+import {
+  createDatabase,
+  DatabaseInst,
+  initializeDatabase,
+} from "~/app/database";
 
 // Создаем контекст с начальным значением `null` или `undefined`
 const DatabaseContext = createContext<DatabaseInst>({} as any);
@@ -14,8 +18,9 @@ export const DatabaseProvider = ({
   const [database, setDatabase] = useState<Database | null>(null);
   // Передаем загруженную базу данных в контекст
   React.useEffect(() => {
-    Database.load("sqlite:mydatabase.db").then((v) => {
-      setDatabase(v);
+    Database.load("sqlite:mydatabase.db").then((db) => {
+      initializeDatabase(db);
+      setDatabase(db);
     });
 
     return () => {

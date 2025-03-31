@@ -1,4 +1,3 @@
-type TransactionType = "income" | "expense";
 export interface Employee {
   id: number; // ID_сотрудника
   fullName: string; // ФИО
@@ -9,7 +8,7 @@ export interface User {
   id: number; // ID_сотрудника
   username: string; // ФИО
   password: string; // Должность
-  hireDate: Date; // Дата_приема
+  name: string; // Дата_приема
 }
 
 export interface Product {

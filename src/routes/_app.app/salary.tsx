@@ -1,9 +1,11 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { FieldDialog } from "~/components/dialog";
 import TablePage from "~/components/tablePage";
+import { useDatabase } from "~/context/databaseContext";
 import { displayPrice, displayTime } from "~/utils";
 
 export const Route = createFileRoute("/_app/app/salary")({
@@ -11,10 +13,12 @@ export const Route = createFileRoute("/_app/app/salary")({
 });
 
 function RouteComponent() {
-  const [data, setData] = useState<Salary[]>([
-    { id: "1", employeeId: "1", amount: 121, period: "" },
-    { id: "2", employeeId: "1", amount: 234234, period: "" },
-  ]);
+  const db = useDatabase();
+
+  const employeeQuery = useQuery({
+    queryKey: ["emploee"],
+    queryFn: async () => await db.employees.select(),
+  });
   const columns: ColumnDef<Salary, unknown>[] = useMemo(
     () => [
       {
@@ -24,7 +28,7 @@ function RouteComponent() {
       {
         header: "Период",
         accessorKey: "period",
-        cell: (info: any) => displayTime(info), // Format the date
+        cell: (info: any) => displayTime(info.cell.getValue() as string), // Format the date
       },
       {
         header: "Выплата",
@@ -34,9 +38,16 @@ function RouteComponent() {
       {
         header: "Работник",
         accessorKey: "employeeId",
+        cell: (info) => {
+          const result = employeeQuery.data?.find(
+            (v) => v.id == info.cell.getValue()
+          );
+
+          return result?.fullName;
+        },
       },
     ],
-    []
+    [employeeQuery.data]
   );
   const fieldsDialog: FieldDialog<Salary>[] = useMemo(
     () => [
@@ -58,24 +69,69 @@ function RouteComponent() {
     ],
     []
   );
+
+  const [data, setData] = useState<Salary[]>([]);
+  useEffect(() => {
+    db.salary.select().then((v) => {
+      setData(
+        v.map((data) => {
+          return {
+            ...data,
+            period: new Date(data.period).toISOString(),
+          };
+        })
+      );
+    });
+
+    return;
+  }, [db]);
+
+  const handleEdit = async (data: Salary & { id: string }): Promise<void> => {
+    await db.products.update(data.id, data);
+    setData((perv) =>
+      perv.map((perv) => {
+        if (perv.id == data.id) {
+          return data;
+        }
+        return perv;
+      })
+    );
+  };
+  const handleDelete = async (id: string) => {
+    await db.salary.delete(parseInt(id));
+    setData((perv) => perv.filter((perv) => perv.id != parseInt(id)));
+  };
+
+  const handleCreate = async (data: Omit<Salary, "id">) => {
+    const id = await db.salary.insert({
+      ...data,
+      period: new Date(data.period),
+    });
+    setData((perv) => [...perv, { ...data, id: id }]);
+  };
+
+  const handleGetByID = async (id: string) => {
+    const finded = data.find((v) => v.id == parseInt(id))!;
+    return finded;
+  };
   return (
     <TablePage
       title="Зарплаты"
+      accessorID="id"
       data={data}
       columns={columns}
       fields={fieldsDialog}
       schema={salarySchema}
-      getByID={async (id) => data.find((v) => v.id === id)!}
-      onCreate={(create) => {
-        console.log(create);
-        setData((perv = []) => [...perv, { id: "", ...create }]);
-      }}
+      getByID={handleGetByID}
+      onCreate={handleCreate}
+      onDelete={handleDelete}
+      onEdit={handleEdit}
     />
   );
 }
 const salarySchema = z.object({
-  id: z.string().optional(),
-  employeeId: z.string(),
+  id: z.number().optional(),
+  employeeId: z.number(),
   period: z.string().min(1),
   amount: z.number(),
 });

@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { FinancialOperation } from "~/app/types";
 
 ChartJS.register(
   CategoryScale,
@@ -18,14 +19,6 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-
-interface FinancialOperation {
-  id: string;
-  date: string;
-  amount: number;
-  operationType: string;
-  productId: number;
-}
 
 interface FinancialChartProps {
   data: FinancialOperation[];
@@ -43,7 +36,7 @@ const FinancialChart: React.FC<FinancialChartProps> = ({ data }) => {
   );
 
   const chartData = {
-    labels: operationTypes,
+    labels: ["Затраты", "Доход"],
     datasets: [
       {
         label: "Сумма",
@@ -132,7 +125,7 @@ const FinancialChart: React.FC<FinancialChartProps> = ({ data }) => {
         },
         title: {
           display: true,
-          text: "Сумма ($)",
+          text: "Сумма (₽)",
           font: {
             size: 14,
             weight: "bold",
@@ -146,7 +139,7 @@ const FinancialChart: React.FC<FinancialChartProps> = ({ data }) => {
   return (
     <div className="card bg-base-100 shadow-md p-6 rounded-xl">
       <div className="card-body">
-        <Bar data={chartData} options={options} />
+        <Bar data={chartData} options={options as any} />
       </div>
     </div>
   );

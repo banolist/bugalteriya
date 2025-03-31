@@ -32,6 +32,11 @@ const routes: Route[] = [
     icon: null,
     text: "Сотрудники",
   },
+  {
+    path: "/app/users",
+    icon: null,
+    text: "Пользователи",
+  },
 ];
 
 const LeftDrawer = ({ children }: { children: any }) => {
