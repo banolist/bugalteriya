@@ -1,4 +1,6 @@
-# Tauri + React + Typescript
+# Система бугалтерского учета для дипломной работы
+
+rust (Tauri) + React
 
 ## Рекомендуемые расширения для IDE (VS Code)
 
